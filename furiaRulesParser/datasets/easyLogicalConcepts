@@ -1,0 +1,7 @@
+(A4 = 0) and (A2 = 0) => class=0 (CF = 1.0)
+(A3 = 0) and (A1 = 0) => class=0 (CF = 1.0)
+(A5 = 0) and (A1 = 1) => class=0 (CF = 1.0)
+(A4 = 0) and (A1 = 1) => class=0 (CF = 1.0)
+(A2 = 0) and (A1 = 0) => class=0 (CF = 1.0)
+(A4 = 1) and (A5 = 1) and (A1 = 1) => class=1 (CF = 0.99)
+(A3 = 1) and (A2 = 1) and (A1 = 0) => class=1 (CF = 0.99)

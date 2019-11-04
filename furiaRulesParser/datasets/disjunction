@@ -1,0 +1,12 @@
+(A1 in [-inf, -inf, 0.26, 0.27]) and (A1 in [0.25, 0.26, inf, inf]) => class=0 (CF = 0.62)
+(A1 in [-inf, -inf, 0.39, 0.4]) and (A1 in [0.38, 0.39, inf, inf]) => class=0 (CF = 0.62)
+(A1 in [0.5, 0.51, inf, inf]) => class=1 (CF = 1.0)
+(A1 in [0.13, 0.14, inf, inf]) => class=1 (CF = 0.81)
+
+(A2 in [0.7, 0.71, inf, inf]) => class=1 (CF = 1.0)
+(A2 in [0.17, 0.18, inf, inf]) => class=1 (CF = 0.8)
+
+(A3 in [0.96, 0.97, inf, inf]) => class=0 (CF = 0.53)
+(A3 in [-inf, -inf, 0.39, 0.4]) => class=1 (CF = 1.0)
+(A3 in [-inf, -inf, 0.73, 0.74]) => class=1 (CF = 0.86)
+(A3 in [-inf, -inf, 0.96, 0.97]) => class=1 (CF = 0.8)
