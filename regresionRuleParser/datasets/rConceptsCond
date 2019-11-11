@@ -1,0 +1,10 @@
+
+Linear Regression Model
+
+class =
+
+      0.0086 * A1 +
+     -0.0631 * A2 +
+     -0.0161 * A4 +
+      0.0049 * A5 +
+      5.4704
