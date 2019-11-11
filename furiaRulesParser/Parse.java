@@ -12,12 +12,13 @@ import java.io.FileNotFoundException;
  */
 class Parse {
     static String[] requiredArguments = new String[]{
-        "input filename",
-        "class",
-        "cf"
+        "input filename (String)",
+        "class (String)",
+        "cf (Double)",
+        "remove duplicates (Boolean)"
     };
     public static void main(String[] args){
-        args = new String[]{"anneal", "3", "0.7"};
+        //args = new String[]{"duplicates2", "1", "0.99", "true"};
         try{
             checkArgs(args);
             File inputFile = new File("datasets/" + args[0]);
@@ -33,7 +34,7 @@ class Parse {
             }
             sc.close();
     
-            ArrayList<String> newRules = parsingRules(rules, args[1], Double.parseDouble(args[2]));
+            ArrayList<String> newRules = parsingRules(rules, args[1], Double.parseDouble(args[2]), Boolean.parseBoolean(args[3]));
             for(String rule : newRules){
                 System.out.println(rule);
             }
@@ -46,7 +47,7 @@ class Parse {
         }
     }
 
-    public static ArrayList<String> parsingRules(ArrayList<String> rules, String c, double CF){
+    public static ArrayList<String> parsingRules(ArrayList<String> rules, String c, double CF, boolean removeDuplicates){
         ArrayList<String> outRules = new ArrayList();
         boolean filterByClass = true;
         boolean filterByCf = true;
@@ -68,9 +69,12 @@ class Parse {
                         convertedRules += (i==0? "" : " and ") + convertSingleRule(splitRule[i]);
                     }
 
-                    outRules.add(convertedRules);
+                    if(!removeDuplicates || !ruleInArrayList(convertedRules, outRules))
+                        outRules.add(convertedRules);
                 }else{
-                    rulesToBeConcatinated.add(convertSingleRule(rule.substring(0, rule.indexOf(" =>"))));
+                    String singleRule = convertSingleRule(rule.substring(0, rule.indexOf(" =>")));
+                    if(!removeDuplicates || !ruleInArrayList(singleRule, rulesToBeConcatinated))
+                        rulesToBeConcatinated.add(singleRule);
                 }
             }
         }
@@ -107,6 +111,21 @@ class Parse {
             throw new ProgramException("The argument " + requiredArguments[args.length] + " is required");
         }
 
+    }
+
+    public static boolean areRulesEqual(String a, String b){
+        for(String rule : a.split(" and ")){
+            if(b.indexOf(rule) == -1)
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean ruleInArrayList(String a, List<String> b){
+        for(String b1 : b)
+            if(areRulesEqual(a, b1))
+                return true;
+        return false;
     }
 }
 
