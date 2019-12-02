@@ -1,5 +1,6 @@
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,6 +12,7 @@ class Parser{
 
     public static void main(String[] args){
         try{
+            args = new String[]{"tree1"};
             checkArgs(args);
     
             File inputFile = new File("models/" + args[0]);
@@ -25,9 +27,19 @@ class Parser{
             fs.close();
             
             ArrayList<LinearFunction> linearFunctions = parseLinearFunctions(rawFile);
+            HashMap<String, LinearFunction> linearFunctionsByLm = new HashMap<>();
+
             for(LinearFunction lf : linearFunctions){
+                linearFunctionsByLm.put("LM" + lf.lmNumber, lf);
                 System.out.println(lf);
             }
+
+            RuleJunction s = parseRuleTree(rawFile.substring(
+                "M5 pruned model tree:\r\n(using smoothed linear models)\r\n\r\n".length(),
+                rawFile.indexOf("\r\n\r\nLM num")
+            ), linearFunctionsByLm);
+
+            System.out.println("s");
 
         }catch(FileNotFoundException e){
             System.out.println(e.getMessage());
@@ -75,6 +87,61 @@ class Parser{
         return out;
     }
 
+    static RuleJunction parseRuleTree(String croppedInput, HashMap<String, LinearFunction> linearFunctionsByLm){
+        String[] inputLines = croppedInput.split("\r\n");
+        System.out.println(inputLines[0]);
+        String[] splitHeader = inputLines[0].split(inputLines[0].indexOf(" <= ") != -1? " <= " : " >  ");
+        String variableName = splitHeader[0];
+        Double ruleCoeff = Double.parseDouble(splitHeader[1].split(" : ")[0]);
+
+
+        Rule rule = new Rule(){
+            @Override
+            public Double evaluate(Double value){
+                return value * ruleCoeff;
+            }
+
+            @Override
+            public String getVariableName(){
+                return variableName;
+            }
+        };
+
+        if(inputLines[0].indexOf("LM") != -1){
+            if(inputLines[1].indexOf("LM") != -1){
+                return new RuleJunction(rule, linearFunctionsByLm.get("LM" + inputLines[0].split("LM")[1].split(" ")[0]), linearFunctionsByLm.get("LM" + inputLines[1].split("LM")[1].split(" ")[0]));
+            }else{
+                String ifFalse = "";
+                int i = 2;
+                for(; i < inputLines.length; i++){
+                    ifFalse += inputLines[i].replaceAll("^\\|   ", "") + (inputLines.length-1 == i? "" : "\r\n");
+                }
+                return new RuleJunction(rule, linearFunctionsByLm.get("LM" + inputLines[0].split("LM")[1].split(" ")[0]), parseRuleTree(ifFalse, linearFunctionsByLm));
+            }
+        }else{
+            String ifTrue = "";
+            int i = 1;
+            for(; i < inputLines.length; i++){
+                if(inputLines[i].indexOf(variableName + " >  " + inputLines[0].split(" <= ")[1]) == -1){
+                    ifTrue += inputLines[i].replaceAll("^\\|   ", "") + (inputLines.length-1 == i? "" : "\r\n");
+                }else{
+                    break;
+                }
+            }
+    
+            String ifFalse = "";
+            if(inputLines[i].indexOf("LM") != -1){
+                return new RuleJunction(rule, parseRuleTree(ifTrue, linearFunctionsByLm), linearFunctionsByLm.get("LM" + inputLines[i].split("LM")[1].split(" ")[0]));
+            }else{
+                for(i++; i < inputLines.length; i++){
+                    ifFalse += inputLines[i].replaceAll("^\\|   ", "") + (inputLines.length-1 == i? "" : "\r\n");
+                }
+            }
+            return new RuleJunction(rule, parseRuleTree(ifTrue, linearFunctionsByLm), parseRuleTree(ifFalse, linearFunctionsByLm));
+        }
+
+    }
+
     
     public static void checkArgs(String[] args) throws ProgramException{
         if(args.length == requiredArguments.length){
@@ -88,31 +155,5 @@ class Parser{
 class ProgramException extends Exception{
     public ProgramException(String errorMesage){
         super(errorMesage);
-    }
-}
-
-class LinearFunction{
-    public ArrayList<Double> coefficients;
-    public ArrayList<String> keys;
-    public String lmNumber;
-
-    public LinearFunction(String lmNumber, ArrayList<Double> coefficients, ArrayList<String> keys){
-        this.coefficients = coefficients;
-        this.keys = keys;
-        this.lmNumber = lmNumber;
-    }
-
-    public String toString(){
-        String out = "Lm:" + this.lmNumber + "\n";
-
-        for(int i = 0; i < this.coefficients.size(); i++){
-            out += this.coefficients.get(i);
-            if(i < this.keys.size()){
-                out += " * " + this.keys.get(i);
-            }
-            out += "\n";
-        }
-
-        return out;
     }
 }
