@@ -12,7 +12,7 @@ class LinearFunction{
     }
 
     Double evaluateFunction(ArrayList<String> keys, ArrayList<Double> values){
-        Double out = 0;
+        Double out = 0d;
         int i = 0;
         for(String key : keys){
             out += values.get(i) * this.coefficients.get(this.keys.indexOf(key));

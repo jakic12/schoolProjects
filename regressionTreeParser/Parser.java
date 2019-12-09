@@ -4,17 +4,22 @@ import java.util.HashMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 class Parser{
     static String[] requiredArguments = new String[]{
-        "input filename (String)"
+        "model filename (String)",
+        "dataset filename (String)"
     };
 
     public static void main(String[] args){
         try{
-            args = new String[]{"tree1"};
+            args = new String[]{"tree1", "rConceptsCond.csv"};
             checkArgs(args);
     
+            // read the model file
             File inputFile = new File("models/" + args[0]);
             FileInputStream fs = new FileInputStream(inputFile);
         
@@ -26,6 +31,7 @@ class Parser{
             
             fs.close();
             
+            //Build the linear function tree
             ArrayList<LinearFunction> linearFunctions = parseLinearFunctions(rawFile);
             HashMap<String, LinearFunction> linearFunctionsByLm = new HashMap<>();
 
@@ -34,12 +40,37 @@ class Parser{
                 System.out.println(lf);
             }
 
-            RuleJunction s = parseRuleTree(rawFile.substring(
+            RuleJunction treeTopJunction = parseRuleTree(rawFile.substring(
                 "M5 pruned model tree:\r\n(using smoothed linear models)\r\n\r\n".length(),
                 rawFile.indexOf("\r\n\r\nLM num")
             ), linearFunctionsByLm);
 
-            System.out.println("s");
+            LinkedHashMap<String, ArrayList<Double>> input = CsvManager.openCsv(new File("datasets/" + args[1]));
+
+            Set<Map.Entry<String,ArrayList<Double>>> test = input.entrySet();
+
+            for(int i = 0; i < input.get(input.keySet().iterator().next()).size(); i++){
+                for(String key : input.keySet()){
+                    System.out.print(key + ":" + input.get(key).get(i));
+                } 
+                System.out.println("");
+            }
+
+            //Regress
+            ArrayList<Double> features = new ArrayList<>();
+
+            ArrayList<String> keys = new ArrayList<>();
+            ArrayList<ArrayList<Double>> values = new ArrayList<>();
+
+            for(String key : input.keySet()){
+                keys.add(key);
+                values.add(input.get(key));
+            }
+
+            double out = treeTopJunction.evaluateJunction(keys, values.get(0));
+            System.out.println(out);
+            
+
 
         }catch(FileNotFoundException e){
             System.out.println(e.getMessage());
@@ -91,14 +122,15 @@ class Parser{
         String[] inputLines = croppedInput.split("\r\n");
         System.out.println(inputLines[0]);
         String[] splitHeader = inputLines[0].split(inputLines[0].indexOf(" <= ") != -1? " <= " : " >  ");
+        boolean biggerThan = inputLines[0].indexOf(" <= ") == -1;
         String variableName = splitHeader[0];
         Double ruleCoeff = Double.parseDouble(splitHeader[1].split(" : ")[0]);
 
 
         Rule rule = new Rule(){
             @Override
-            public Double evaluate(Double value){
-                return value * ruleCoeff;
+            public boolean evaluate(Double value){
+                return biggerThan? (value > ruleCoeff) : (value <= ruleCoeff);
             }
 
             @Override
