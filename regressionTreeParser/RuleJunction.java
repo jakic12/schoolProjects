@@ -14,13 +14,19 @@ class RuleJunction{
     }
 
     RuleJunction(Rule junctionRule, RuleJunction ruleIfTrue, LinearFunction linearFunctionIfFalse){
+        this.junctionRule = junctionRule;
+        this.ruleIfTrue = ruleIfTrue;
+        this.linearFunctionIfFalse = linearFunctionIfFalse;
     }
 
     RuleJunction(Rule junctionRule, LinearFunction linearFunctionIfTrue, RuleJunction ruleIfFalse){
-        
+        this.junctionRule = junctionRule;
+        this.linearFunctionIfTrue = linearFunctionIfTrue;
+        this.ruleIfFalse = ruleIfFalse;
     }
 
     RuleJunction(Rule junctionRule, LinearFunction linearFunctionIfTrue, LinearFunction linearFunctionIfFalse){
+        this.junctionRule = junctionRule;
         this.linearFunctionIfTrue = linearFunctionIfTrue;
         this.linearFunctionIfFalse = linearFunctionIfFalse;
     }

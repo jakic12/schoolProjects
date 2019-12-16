@@ -11,11 +11,11 @@ class LinearFunction{
         this.lmNumber = lmNumber;
     }
 
-    Double evaluateFunction(ArrayList<String> keys, ArrayList<Double> values){
+    Double evaluateFunction(ArrayList<String> dataKeys, ArrayList<Double> values){
         Double out = 0d;
         int i = 0;
-        for(String key : keys){
-            out += values.get(i) * this.coefficients.get(this.keys.indexOf(key));
+        for(String key : this.keys){
+            out += values.get(i) * this.coefficients.get(dataKeys.indexOf(key));
             i++;
         }
         return out;

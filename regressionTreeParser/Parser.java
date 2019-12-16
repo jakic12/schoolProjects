@@ -11,12 +11,13 @@ import java.util.Set;
 class Parser{
     static String[] requiredArguments = new String[]{
         "model filename (String)",
-        "dataset filename (String)"
+        "dataset filename (String)",
+        "output filename (String)"
     };
 
     public static void main(String[] args){
         try{
-            args = new String[]{"tree1", "rConceptsCond.csv"};
+            args = new String[]{"tree1", "rConceptsCond.csv", "outputs/rConceptsCond.csv"};
             checkArgs(args);
     
             // read the model file
@@ -47,8 +48,6 @@ class Parser{
 
             LinkedHashMap<String, ArrayList<Double>> input = CsvManager.openCsv(new File("datasets/" + args[1]));
 
-            Set<Map.Entry<String,ArrayList<Double>>> test = input.entrySet();
-
             for(int i = 0; i < input.get(input.keySet().iterator().next()).size(); i++){
                 for(String key : input.keySet()){
                     System.out.print(key + ":" + input.get(key).get(i));
@@ -61,16 +60,47 @@ class Parser{
 
             ArrayList<String> keys = new ArrayList<>();
             ArrayList<ArrayList<Double>> values = new ArrayList<>();
-
-            for(String key : input.keySet()){
-                keys.add(key);
-                values.add(input.get(key));
+            
+            String className = "";
+            for(int i = 0; i < input.get(input.keySet().iterator().next()).size(); i++){
+                values.add(new ArrayList<>());
+            
+                int j = 0;
+                for(String key : input.keySet()){
+                    if(input.keySet().size()-1 > j){
+                        if(i == 0)
+                            keys.add(key);
+                        values.get(i).add(input.get(key).get(i));
+                    }else{
+                        className = key;
+                    }
+                    j++;
+                }
             }
 
-            double out = treeTopJunction.evaluateJunction(keys, values.get(0));
-            System.out.println(out);
+            for(ArrayList<Double> row : values){
+                features.add(treeTopJunction.evaluateJunction(keys, row));
+            }
+             
+            LinkedHashMap<String, ArrayList<Double>> outWithFeatures = new LinkedHashMap<>();
+            for(String key : keys){
+                ArrayList<Double> outColumn = new ArrayList<>();
+                if(keys.indexOf(key) != -1){
+                    int indexOfKey = keys.indexOf(key);
+                    for(int i = 0; i < values.size(); i++){
+                        outColumn.add(values.get(i).get(indexOfKey));
+                    }
+                }
+                
+                outWithFeatures.put(key, outColumn);
+            }
             
+            outWithFeatures.put(className, input.get(className));
+            outWithFeatures.put("features", features);
 
+            System.out.println(outWithFeatures);
+
+            CsvManager.writeToFile(new File(args[2]), outWithFeatures);
 
         }catch(FileNotFoundException e){
             System.out.println(e.getMessage());
@@ -141,14 +171,18 @@ class Parser{
 
         if(inputLines[0].indexOf("LM") != -1){
             if(inputLines[1].indexOf("LM") != -1){
-                return new RuleJunction(rule, linearFunctionsByLm.get("LM" + inputLines[0].split("LM")[1].split(" ")[0]), linearFunctionsByLm.get("LM" + inputLines[1].split("LM")[1].split(" ")[0]));
+                
+                RuleJunction outRuleJunction =  new RuleJunction(rule, linearFunctionsByLm.get("LM" + inputLines[0].split("LM")[1].split(" ")[0]), linearFunctionsByLm.get("LM" + inputLines[1].split("LM")[1].split(" ")[0]));
+                return outRuleJunction;
             }else{
                 String ifFalse = "";
                 int i = 2;
                 for(; i < inputLines.length; i++){
                     ifFalse += inputLines[i].replaceAll("^\\|   ", "") + (inputLines.length-1 == i? "" : "\r\n");
                 }
-                return new RuleJunction(rule, linearFunctionsByLm.get("LM" + inputLines[0].split("LM")[1].split(" ")[0]), parseRuleTree(ifFalse, linearFunctionsByLm));
+                
+                RuleJunction outRuleJunction =  new RuleJunction(rule, linearFunctionsByLm.get("LM" + inputLines[0].split("LM")[1].split(" ")[0]), parseRuleTree(ifFalse, linearFunctionsByLm));
+                return outRuleJunction;
             }
         }else{
             String ifTrue = "";
@@ -163,13 +197,18 @@ class Parser{
     
             String ifFalse = "";
             if(inputLines[i].indexOf("LM") != -1){
-                return new RuleJunction(rule, parseRuleTree(ifTrue, linearFunctionsByLm), linearFunctionsByLm.get("LM" + inputLines[i].split("LM")[1].split(" ")[0]));
+                
+                RuleJunction outRuleJunction =  new RuleJunction(rule, parseRuleTree(ifTrue, linearFunctionsByLm), linearFunctionsByLm.get("LM" + inputLines[i].split("LM")[1].split(" ")[0]));
+                System.out.println("zte");
+                return outRuleJunction;
             }else{
                 for(i++; i < inputLines.length; i++){
                     ifFalse += inputLines[i].replaceAll("^\\|   ", "") + (inputLines.length-1 == i? "" : "\r\n");
                 }
             }
-            return new RuleJunction(rule, parseRuleTree(ifTrue, linearFunctionsByLm), parseRuleTree(ifFalse, linearFunctionsByLm));
+            
+            RuleJunction outRuleJunction =  new RuleJunction(rule, parseRuleTree(ifTrue, linearFunctionsByLm), parseRuleTree(ifFalse, linearFunctionsByLm));
+            return outRuleJunction;
         }
 
     }
