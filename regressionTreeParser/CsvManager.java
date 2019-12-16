@@ -57,6 +57,7 @@ class CsvManager{
             }
             pw.println();
         }
+        pw.close();
     }
 
 }
